@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-storage.js"></script>
+
+<!-- Firebase configuration -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAqe9dBcWYQ5aUKPt0YO93Ux3mw_YKD3js",
+    authDomain: "chat-video-web.firebaseapp.com",
+    databaseURL: "https://chat-video-web-default-rtdb.firebaseio.com",
+    projectId: "chat-video-web",
+    storageBucket: "chat-video-web.appspot.com",
+    messagingSenderId: "690074701234",
+    appId: "1:690074701234:web:92ec4f646d8ab60b8aa8ab",
+    measurementId: "G-FMHPVTZTDW"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+</script>
+
+    <!-- HTML form -->
+<form>
+    <label for="title">Title:</label>
+    <input type="text" id="title" name="title"><br>
+  
+    <label for="content">Content:</label>
+    <textarea id="content" name="content"></textarea><br>
+  
+    <label for="author">Author:</label>
+    <input type="text" id="author" name="author"><br>
+  
+    <input type="submit" value="Submit">
+  </form>
+
+  <form>
+    <input type="file" id="fileInput">
+    <button type="button" onclick="uploadImage()">Upload Image</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Content</th>
+        <th>Author</th>
+      </tr>
+    </thead>
+    <tbody id="blog-posts">
+    </tbody>
+  </table>
+  
+  <!-- JavaScript code -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    // Get a reference to the Firebase Realtime Database
+    var database = firebase.database();
+    
+    // Get a reference to the blog posts collection
+    var blogPostsRef = database.ref('blog-posts');
+    
+    // Handle form submission
+    $('form').submit(function(event) {
+      // Prevent the form from submitting normally
+      event.preventDefault();
+  
+      // Get the values entered in the form
+      var title = $('#title').val();
+      var content = $('#content').val();
+      var author = $('#author').val();
+      // Create a JSON object with the data
+      var blogPost = {
+        title: title,
+        content: content,
+        author: author,
+        fileInput: fileInput
+      }
+  
+      // Push the blog post to Firebase Realtime Database
+      blogPostsRef.push(blogPost);
+  
+      // Clear the form
+      $('form')[0].reset();
+      
+    });
+
+    blogPostsRef.on('value', function(snapshot) {
+    var blogPosts = snapshot.val();
+    var html = '';
+    for (var postId in blogPosts) {
+      var post = blogPosts[postId];
+      console.log(post)
+      html += '<tr>';
+      html += '<td>' + post.title + '</td>';
+      html += '<td>' + post.content + '</td>';
+      html += '<td>' + post.author + '</td>';
+      html += '<td><img src="' + post.fileInput + '"></td>';
+      html += '</tr>';
+    }
+    $('#blog-posts').html(html);
+  });
+
+  function uploadImage() {
+  // Get the selected file
+  var file = document.getElementById("fileInput").files[0];
+
+  // Create a storage reference to the file location
+  var storageRef = firebase.storage().ref().child("blog-images/" + file.name);
+
+  // Upload the file to the storage location
+  var task = storageRef.put(file);
+
+  // Register a listener to track the upload progress
+  task.on('state_changed',
+    function progress(snapshot) {
+      var percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      console.log(percent + '% uploaded');
+    },
+    function error(err) {
+      console.log('Upload failed:', err);
+    },
+    function complete() {
+      console.log('Upload complete');
+      
+      // Get the download URL for the uploaded image
+      storageRef.getDownloadURL().then(function(url) {
+        console.log('Download URL:', url);
+      }).catch(function(error) {
+        console.log('Error getting download URL:', error);
+      });
+    }
+  );
+}
+
+
+
+  </script>
+  
+</body>
+</html>
